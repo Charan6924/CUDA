@@ -1,0 +1,4 @@
+module avail cuda
+module load CUDA/12.1.1
+srun -A dlw -p gpu --gres=gpu:1 --mem=16gb --constraint=gpu2h100 --pty bash
+srun -p cgpudlw --nodelist=cgput004 -c 24 --time=72:00:00 --gres=gpu:4 --mem=120g --pty /bin/bash
