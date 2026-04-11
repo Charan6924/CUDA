@@ -23,7 +23,7 @@ int main(){
  }
 
  int blockSize = 256;
- int numBlocks = (N + blockSize - 1) / blockSize;
+ int numBlocks = (N + blockSize + 1)/blockSize;
  cudaMemPrefetchAsync(x, N*sizeof(float), 0, 0);
  cudaMemPrefetchAsync(y, N*sizeof(float), 0, 0);
  add<<<numBlocks, blockSize>>>(N, sum, x, y);
