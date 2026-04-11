@@ -41,6 +41,19 @@ bool vectorApproximatelyEqual(float* A, float* B, int length, float epsilon=0.00
     return true;
 }
 
+#define CUDA_CHECK(expr_to_check) do {                          \
+    cudaError_t result  = expr_to_check;                        \
+    if(result != cudaSuccess)                                   \
+    {                                                           \
+        fprintf(stderr,                                         \
+                "CUDA Runtime Error: %s:%i:%d = %s\n",         \
+                __FILE__,                                       \
+                __LINE__,                                       \
+                result,                                         \
+                cudaGetErrorString(result));                    \
+    }                                                           \
+} while(0)
+
 void explicitAdd(int vectorLength){
     float* A{};
     float* B{};
@@ -58,9 +71,9 @@ void explicitAdd(int vectorLength){
     initArray(A, vectorLength);
     initArray(B,vectorLength);
 
-    cudaMalloc(&devA, vectorLength*sizeof(float));
-    cudaMalloc(&devB, vectorLength*sizeof(float));
-    cudaMalloc(&devC, vectorLength*sizeof(float));
+    CUDA_CHECK(cudaMalloc(&devA, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&devB, vectorLength*sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&devC, vectorLength*sizeof(float)));
 
     cudaMemcpy(devA, A, vectorLength*sizeof(float), cudaMemcpyDefault);
     cudaMemcpy(devB, B, vectorLength*sizeof(float), cudaMemcpyDefault);
