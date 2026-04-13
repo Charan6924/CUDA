@@ -2,3 +2,4 @@
 *.nsys-rep
 
 cmds.txt
+.venv/
