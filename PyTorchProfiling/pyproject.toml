@@ -11,6 +11,8 @@ dependencies = [
     "pathlib>=1.0.1",
     "pandas>=3.0.2",
     "ninja>=1.13.0",
+    "matplotlib>=3.10.8",
+    "wurlitzer>=3.1.1",
 ]
 
 [tool.uv.sources]

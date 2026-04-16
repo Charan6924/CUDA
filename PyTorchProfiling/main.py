@@ -20,7 +20,12 @@ def square_2(a):
 
 def square_3(a):
     return a**2
-
+x = time_pytorch_function(torch.square,b)
+print(x)
+x = time_pytorch_function(square_2,b)
+print(x)
+x = time_pytorch_function(square_3,b)
+print(x)
 with torch.autograd.profiler.profile(use_device='cuda') as prof:
     torch.square(b)
 print(prof.key_averages().table(sort_by="cuda_time_total", row_limit=10))
