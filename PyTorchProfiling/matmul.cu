@@ -37,3 +37,7 @@ torch::Tensor multiplyMatrices(torch::Tensor m, torch::Tensor n){
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     return output;
 }
+
+PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
+    m.def("multiplyMatrices", &multiplyMatrices, "Matrix multiplication (CUDA)");
+}
