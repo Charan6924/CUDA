@@ -6,20 +6,35 @@
 #define CHECK_CONTIGUOUS(x) TORCH_CHECK(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
-inline unsigned int cdiv(unsigned int a, unsigned int b) { return (a + b - 1) / b;}
+__host__ __device__ inline unsigned int cdiv(unsigned int a, unsigned int b) { return (a + b - 1) / b;}
+#define TILE 16
 
 __global__ void matmul(float*a, float*b, float*c,int h, int w,int k){
-    int col = blockIdx.x * blockDim.x + threadIdx.x;
-    int r = blockIdx.y * blockDim.y + threadIdx.y;
+    __shared__ float tileA[TILE][TILE+1];
+    __shared__ float tileB[TILE][TILE+1];
 
-    if (r<h && col<w){
-        float sum = 0.0f;
-        for (int i=0;i<k;i++){
-            sum += a[r*k+i] * b[i*w+col];
-        }
-        c[r * w + col] = sum;
+    int row = blockIdx.y * TILE + threadIdx.y;
+    int col = blockIdx.x * TILE + threadIdx.x;
+    int tx = threadIdx.x;
+    int ty = threadIdx.y;
+
+    float sum = 0.0f;
+    for (int t = 0; t<cdiv(k,TILE);t++){
+        int aCol = t*TILE + tx;
+        tileA[ty][tx] = (row < h && aCol < k) ? a[row * k + aCol] : 0.0f;
+        int bRow = t * TILE + ty;
+        tileB[ty][tx] = (bRow < k && col < w) ? b[bRow * w + col] : 0.0f;
+
+        __syncthreads();
+
+        for (int i = 0; i < TILE; i++)
+            sum += tileA[ty][i] * tileB[i][tx];
+
+        __syncthreads();
     }
-
+    if (row<h && col<w){
+        c[row*w + col] = sum;
+    }
 }
 
 torch::Tensor multiplyMatrices(torch::Tensor m, torch::Tensor n){
@@ -31,8 +46,8 @@ torch::Tensor multiplyMatrices(torch::Tensor m, torch::Tensor n){
     TORCH_CHECK((k==n.size(0)), "size mismatch");
     torch::Tensor output {torch::zeros({h,w},m.options())};
 
-    dim3 tpb(16,16);
-    dim3 blocks(cdiv(w,tpb.x),cdiv(h,tpb.y));
+    dim3 tpb(TILE,TILE);
+    dim3 blocks(cdiv(w,TILE),cdiv(h,TILE));
     matmul<<<blocks,tpb>>>(m.data_ptr<float>(),n.data_ptr<float>(),output.data_ptr<float>(),h,w,k);
     C10_CUDA_KERNEL_LAUNCH_CHECK();
     return output;
