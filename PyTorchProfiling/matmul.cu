@@ -10,8 +10,8 @@ __host__ __device__ inline unsigned int cdiv(unsigned int a, unsigned int b) { r
 #define TILE 16
 
 __global__ void matmul(float*a, float*b, float*c,int h, int w,int k){
-    __shared__ float tileA[TILE][TILE+1];
-    __shared__ float tileB[TILE][TILE+1];
+    __shared__ float tileA[TILE][TILE];
+    __shared__ float tileB[TILE][TILE];
 
     int row = blockIdx.y * TILE + threadIdx.y;
     int col = blockIdx.x * TILE + threadIdx.x;
