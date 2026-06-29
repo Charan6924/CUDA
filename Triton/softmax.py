@@ -1,3 +1,5 @@
+from tarfile import BLOCKSIZE
+
 import torch
 import triton.language as tl
 import triton
@@ -17,13 +19,13 @@ def triton_softmax(x:torch.Tensor):
     y = torch.empty_like(x)
 
     M,N  = x.shape
-    block_size = triton.next_power_of_2(N)
+    BLOCK_SIZE = triton.next_power_of_2(N)
     num_blocks = M
 
     triton_softmax_kernel[(M,)](
         x_ptr=x, y_ptr=y,
         x_row_stride=x.stride(0), y_row_stride=y.stride(0),
-        num_cols=N, BLOCK_SIZE=block_size
+        num_cols=N, BLOCK_SIZE=BLOCK_SIZE
     )
 
     return y
@@ -57,6 +59,12 @@ def output_ptx(name: str, kernel):
         f.write(ptx)
 
 def launch_kernel():
-    raise NotImplementedError
+    M, N = 4, 128
+    x = torch.randn(M, N, device="cuda")
+    y_triton = triton_softmax(x)
+    y_naive = naive_softmax(x)
+    print(f"Max diff: {(y_triton - y_naive).abs().max().item()}")
+    assert torch.allclose(y_triton, y_naive, atol=1e-5), "Results don't match!"
+    print("Results match!")
 
 launch_kernel()
