@@ -38,3 +38,9 @@ def output_ptx(name: str, kernel):
     with open(ptx_path, "w") as f:
         ptx = kernel.asm["ptx"]
         f.write(ptx)
+
+def launch_kernel():
+    x = torch.randn(8192, device = 'cuda')
+    y = triton_gelu(x)
+
+launch_kernel()
