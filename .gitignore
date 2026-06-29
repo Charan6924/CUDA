@@ -1,5 +1,4 @@
 *.sqlite
 *.nsys-rep
 
-cmds.txt
 .venv/
